@@ -1,0 +1,102 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="theme-color" content="#0972b4" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="#0972b4" />
+        <link rel="icon" href="icon.png" type="image/png" sizes="16x16" />
+        <title>Ajax with Open Data</title>
+        <script type="text/javascript" src="mainjs.js"></script>
+        <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        span {
+            font-style: italic;
+            font-weight: 100;
+            font-size: 9px;
+            display: none;
+        }
+        .b {
+            margin: 1.5em;
+            justify-content: center;
+            display: inline-flex;
+            overflow: hidden;
+        }
+        </style>
+        <script>
+            var test;
+            window.onload = function() {
+                loadSide();
+            }
+            
+
+            function loadSide() {
+                ajaxReq.send("GET", "opendata.epa.gov.tw.xml", handleRequest);
+                console.log("%cXML Data is available.", "color: silver;");
+            }
+
+            function handleRequest() {
+                if (ajaxReq.getReadyState() == 4 && ajaxReq.getStatus() == 200) {
+                    var xmlData = ajaxReq.getResponseXML().getElementsByTagName("AQX")[0];
+                    var xmlDataBlock = xmlData.getElementsByTagName("Data");
+
+                    for (var i=0 ; i<xmlDataBlock.length ; i++) {
+                        aqx.push(getText(xmlDataBlock[i].getElementsByTagName("SiteName")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("County")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("PSI")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("Status")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("PM10")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("PM2.5")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("WindSpeed")[0]), 
+                        getText(xmlDataBlock[i].getElementsByTagName("PublishTime")[0]), );
+                    }
+                    showContent();
+                }
+            }
+
+            function showContent() {
+                var contentListHTML = "", i;
+                for (var i=0 ; i<(aqx.length/8) ; i++) {
+                    contentListHTML += "<div class='b'>測站 : " + aqx[i*8 + 0] + "  " + aqx[i*8 + 1];
+                    contentListHTML += "<br />PSI : " + aqx[i*8 + 2] + "<br />PM10 : " + aqx[i*8 + 4] + "<br />PM2.5 : " +
+                        aqx[i*8 + 5] + "<br />風速:" + aqx[i*8 + 6] + "<br />狀態:" + aqx[i*8 + 3] + "<br /><span>發布時間:" + aqx[i*8 + 7] + "</span></div>";
+                }
+                // console.log(contentListHTML);
+                document.getElementById("content").innerHTML = decodeURIComponent(contentListHTML);
+            }
+
+            function getText(elem) {
+                var text = "";
+                if (elem) {    // XML element name
+                    if (elem.childNodes) {  // XML element content
+                        // console.log(elem.childNodes);
+                        for (var i = 0; i < elem.childNodes.length; i++) {
+                            var child = elem.childNodes[i];
+                            if (child.nodeValue) {
+                                text += child.nodeValue;                                
+                            }
+                            else {
+                                if (child.childNodes[0])
+                                    if (child.childNodes[0].nodeValue)
+                                        text += child.childNodes[0].nodeValue;
+                            }
+                        }
+                    }
+                }
+                return text;
+            }
+
+            setInterval(showNewTime, 1000);
+            var ajaxReq = new AjaxRequest();
+            var aqx = new Array();
+            // var 
+        </script>
+    </head>
+    <body>
+        <h3>空氣品質即時污染指標</h3>
+        <div id="nowTime"></div>
+        <br />
+        <br />
+        <div id="content"></div>
+    </body>
+</html>
